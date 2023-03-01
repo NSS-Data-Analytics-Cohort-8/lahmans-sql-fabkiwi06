@@ -4,9 +4,12 @@
 
 -- ### Use SQL queries to find answers to the *Initial Questions*. If time permits, choose one (or more) of the *Open-Ended Questions*. Toward the end of the bootcamp, we will revisit this data if time allows to combine SQL, Excel Power Pivot, and/or Python to answer more of the *Open-Ended Questions*.
 
--- DATA EXPLORATION
+-- MASTER TABLE = PEOPLE
 SELECT * 
 FROM people
+
+SELECT * 
+FROM TEAMS
 
 -- **Initial Questions**
 
@@ -15,8 +18,16 @@ FROM people
 SELECT MIN(debut), MAX(finalgame)
 FROM people
 
-
 -- 2. Find the name and height of the shortest player in the database. How many games did he play in? What is the name of the team for which he played?
+SELECT namefirst, namelast, MIN(height) AS height, G_all, t.name AS team
+FROM people AS p
+INNER JOIN appearances AS a
+ON p.playerid = a.playerid
+INNER JOIN teams AS t
+ON a.teamid = t.teamid
+GROUP BY height, namelast, namefirst, G_all, team
+ORDER BY height
+LIMIT 1;
    
 
 -- 3. Find all players in the database who played at Vanderbilt University. Create a list showing each player’s first and last names as well as the total salary they earned in the major leagues. Sort this list in descending order by the total salary earned. Which Vanderbilt player earned the most money in the majors?
