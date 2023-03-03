@@ -87,13 +87,43 @@ GROUP BY decade
 
 SELECT MAX(yearid), MIN(yearid)
 FROM batting
-
 -- The trend I see is 1. The more home runs, the more strikeouts and 2. the homerun average has gone up because of (presumed) steroid use.
 
 -- 6. Find the player who had the most success stealing bases in 2016, where __success__ is measured as the percentage of stolen base attempts which are successful. (A stolen base attempt results either in a stolen base or being caught stealing.) Consider only players who attempted _at least_ 20 stolen bases.
 	
 
 -- 7.  From 1970 – 2016, what is the largest number of wins for a team that did not win the world series? What is the smallest number of wins for a team that did win the world series? Doing this will probably result in an unusually small number of wins for a world series champion – determine why this is the case. Then redo your query, excluding the problem year. How often from 1970 – 2016 was it the case that a team with the most wins also won the world series? What percentage of the time?
+SELECT name, w
+FROM teams
+WHERE WSWin LIKE 'N'
+	AND yearid BETWEEN 1970 AND 2016
+GROUP BY name, w
+ORDER BY w DESC
+-- Largest Number of Wins with no WS: 116
+SELECT name, w
+FROM teams
+WHERE WSWin LIKE 'Y'
+	AND yearid BETWEEN 1970 AND 2016
+GROUP BY name, w
+ORDER BY w
+--Smallest Number of Wins with WS: 1
+SELECT name, w
+FROM teams
+WHERE WSWin LIKE 'Y'
+	AND yearid BETWEEN 1970 AND 1993
+	OR yearid BETWEEN 1995 and 2016
+GROUP BY name, w
+ORDER BY wins
+--Excluded 1994 due to strike. Smallest Number 43
+
+--Find Percent of WS Wins that are also the max wins
+
+SELECT yearid, name, WSWin, w
+FROM teams
+WHERE yearid BETWEEN 1970 AND 2016
+GROUP BY yearid, name, wswin, w
+ORDER BY yearid DESC
+
 
 
 -- 8. Using the attendance figures from the homegames table, find the teams and parks which had the top 5 average attendance per game in 2016 (where average attendance is defined as total attendance divided by number of games). Only consider parks where there were at least 10 games played. Report the park name, team name, and average attendance. Repeat for the lowest 5 average attendance.
