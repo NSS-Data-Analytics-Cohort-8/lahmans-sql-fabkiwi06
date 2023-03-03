@@ -62,10 +62,33 @@ FROM player_position
 INNER JOIN fielding
 ON player_position.playerid = fielding.playerid
 GROUP BY position
-
    
 -- 5. Find the average number of strikeouts per game by decade since 1920. Round the numbers you report to 2 decimal places. Do the same for home runs per game. Do you see any trends?
-   
+
+WITH decade_count AS (
+	SELECT playerid,
+		CASE WHEN yearid BETWEEN 1920 and 1929 THEN '1920s'
+		WHEN yearid  BETWEEN 1930 and 1939 THEN '1930s'
+		WHEN yearid  BETWEEN 1940 and 1949 THEN '1940s'
+		WHEN yearid  BETWEEN 1950 and 1959 THEN '1950s'
+		WHEN yearid  BETWEEN 1960 and 1969 THEN '1960s'
+		WHEN yearid  BETWEEN 1970 and 1979 THEN '1970s'
+		WHEN yearid  BETWEEN 1980 and 1989 THEN '1980s'
+		WHEN yearid  BETWEEN 1990 and 1999 THEN '1990s'
+		WHEN yearid  BETWEEN 2000 and 2009 THEN '2000s'
+		WHEN yearid  BETWEEN 2010 and 2019 THEN '2010s'
+		ELSE 'not needed' END AS decade
+	FROM batting AS b1)
+SELECT decade, ROUND(AVG(so), 2) AS strikeout_average, ROUND(AVG(hr), 2) AS homerun_average
+FROM batting AS b2
+INNER JOIN decade_count AS b1
+ON b1.playerid = b2.playerid
+GROUP BY decade
+
+SELECT MAX(yearid), MIN(yearid)
+FROM batting
+
+-- The trend I see is 1. The more home runs, the more strikeouts and 2. the homerun average has gone up because of (presumed) steroid use.
 
 -- 6. Find the player who had the most success stealing bases in 2016, where __success__ is measured as the percentage of stolen base attempts which are successful. (A stolen base attempt results either in a stolen base or being caught stealing.) Consider only players who attempted _at least_ 20 stolen bases.
 	
