@@ -30,44 +30,43 @@ ORDER BY height
 LIMIT 1;
 
 -- 3. Find all players in the database who played at Vanderbilt University. Create a list showing each player’s first and last names as well as the total salary they earned in the major leagues. Sort this list in descending order by the total salary earned. Which Vanderbilt player earned the most money in the majors?
-SELECT DISTINCT p.playerid AS id, namefirst, namelast, schoolname, COALESCE(SUM(salary), 0) AS salary
+SELECT DISTINCT p.playerid AS id, namefirst, namelast, COALESCE(SUM(salary), 0) AS salary
 FROM people AS p
-LEFT JOIN collegeplaying AS c
-ON p.playerid = c.playerid
-LEFT JOIN schools AS s
-ON c.schoolid = s.schoolid
-LEFT JOIN salaries AS ss
+INNER JOIN salaries AS ss
 ON p.playerid = ss.playerid
-WHERE schoolname LIKE 'Vanderbilt University'
-GROUP BY id, namefirst, namelast, schoolname
+WHERE p.playerid IN 
+(
+SELECT playerid
+	FROM collegeplaying as c
+	JOIN schools
+	USING (schoolid)
+	WHERE schoolname LIKE 'Vanderbilt University'
+)
+GROUP BY id, namefirst, namelast
 ORDER BY salary DESC 
--- David Price earned $245,553,888
+
+-- David Price earned $81,851,296
 
 -- 4. Using the fielding table, group players into three groups based on their position: label players with position OF as "Outfield", those with position "SS", "1B", "2B", and "3B" as "Infield", and those with position "P" or "C" as "Battery". Determine the number of putouts made by each of these three groups in 2016.
 select * from fielding
 
-WITH player_position AS (
-	SELECT playerid,
-		CASE WHEN pos ='OF' THEN 'Outfield'
+SELECT 
+CASE WHEN pos ='OF' THEN 'Outfield'
 		WHEN pos = 'SS' THEN 'Infield'
 		WHEN pos = '1B' THEN 'Infield'
 		WHEN pos = '2B' THEN 'Infield'
 		WHEN pos = '3B' THEN 'Infield'
 		WHEN pos = 'P' THEN 'Battery'
 		WHEN pos = 'C' THEN 'Battery'
-		ELSE 'None' END AS position
-	FROM fielding)
-SELECT position, COUNT(PO) AS putouts
-FROM player_position
-INNER JOIN fielding
-ON player_position.playerid = fielding.playerid
+		ELSE 'None' END AS position, SUM(PO) AS putouts
+FROM fielding
+WHERE yearid = 2016
 GROUP BY position
    
 -- 5. Find the average number of strikeouts per game by decade since 1920. Round the numbers you report to 2 decimal places. Do the same for home runs per game. Do you see any trends?
 
-WITH decade_count AS (
-	SELECT playerid,
-		CASE WHEN yearid BETWEEN 1920 and 1929 THEN '1920s'
+SELECT 
+   CASE WHEN yearid  BETWEEN 1920 and 1929 THEN '1920s'
 		WHEN yearid  BETWEEN 1930 and 1939 THEN '1930s'
 		WHEN yearid  BETWEEN 1940 and 1949 THEN '1940s'
 		WHEN yearid  BETWEEN 1950 and 1959 THEN '1950s'
@@ -77,16 +76,15 @@ WITH decade_count AS (
 		WHEN yearid  BETWEEN 1990 and 1999 THEN '1990s'
 		WHEN yearid  BETWEEN 2000 and 2009 THEN '2000s'
 		WHEN yearid  BETWEEN 2010 and 2019 THEN '2010s'
-		ELSE 'not needed' END AS decade
-	FROM batting AS b1)
-SELECT decade, ROUND(AVG(so), 2) AS strikeout_average, ROUND(AVG(hr), 2) AS homerun_average
-FROM batting AS b2
-INNER JOIN decade_count AS b1
-ON b1.playerid = b2.playerid
+		ELSE 'not needed' END AS decade, 
+		ROUND(AVG(so), 2) AS strikeout_average, ROUND(AVG(hr), 2) AS homerun_average
+FROM batting
 GROUP BY decade
 
-SELECT MAX(yearid), MIN(yearid)
-FROM batting
+select avg(so)
+from batting
+where yearid BETWEEN 1990 and 1999
+
 -- The trend I see is 1. The more home runs, the more strikeouts and 2. the homerun average has gone up because of (presumed) steroid use.
 
 -- 6. Find the player who had the most success stealing bases in 2016, where __success__ is measured as the percentage of stolen base attempts which are successful. (A stolen base attempt results either in a stolen base or being caught stealing.) Consider only players who attempted _at least_ 20 stolen bases.
@@ -107,36 +105,40 @@ GROUP BY batting.playerid, stolen, total_attempt
 ORDER BY playerid
 
 -- 7.  From 1970 – 2016, what is the largest number of wins for a team that did not win the world series? What is the smallest number of wins for a team that did win the world series? Doing this will probably result in an unusually small number of wins for a world series champion – determine why this is the case. Then redo your query, excluding the problem year. How often from 1970 – 2016 was it the case that a team with the most wins also won the world series? What percentage of the time?
-SELECT name, w
+select teamid, w from teams
+group by teamid, w
+
+SELECT name, max(w)
 FROM teams
 WHERE WSWin LIKE 'N'
 	AND yearid BETWEEN 1970 AND 2016
 GROUP BY name, w
 ORDER BY w DESC
 -- Largest Number of Wins with no WS: 116
-SELECT name, w
+SELECT name, min(w)
 FROM teams
 WHERE WSWin LIKE 'Y'
 	AND yearid BETWEEN 1970 AND 2016
 GROUP BY name, w
 ORDER BY w
---Smallest Number of Wins with WS: 1
-SELECT name, w
+--Smallest Number of Wins with WS: 63
+SELECT name, min(w)
 FROM teams
 WHERE WSWin LIKE 'Y'
-	AND yearid BETWEEN 1970 AND 1993
-	OR yearid BETWEEN 1995 and 2016
+	AND yearid BETWEEN 1970 AND 2016
+	AND yearid <> 1994
 GROUP BY name, w
-ORDER BY wins
---Excluded 1994 due to strike. Smallest Number 43
+ORDER BY w
+--Excluded 1994 due to strike. Smallest Number 63
 
 --Find Percent of WS Wins that are also the max wins
-
-SELECT yearid, name, WSWin, w
+WITH wswinners AS(
+SELECT yearid, name, w
 FROM teams
 WHERE yearid BETWEEN 1970 AND 2016
-GROUP BY yearid, name, wswin, w
-ORDER BY yearid DESC
+	AND wswin LIKE 'Y'
+GROUP BY yearid, name, w
+WIN
 
 
 
