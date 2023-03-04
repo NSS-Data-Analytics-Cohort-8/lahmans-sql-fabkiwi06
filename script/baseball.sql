@@ -91,6 +91,24 @@ FROM batting
 
 -- 6. Find the player who had the most success stealing bases in 2016, where __success__ is measured as the percentage of stolen base attempts which are successful. (A stolen base attempt results either in a stolen base or being caught stealing.) Consider only players who attempted _at least_ 20 stolen bases.
 
+WITH edit AS
+	(
+		SELECT DISTINCT playerid, COALESCE(SUM(sb), 0) AS stolen, COALESCE(SUM(cs), 0) AS failed, COALESCE(SUM(sb), 0) + COALESCE(SUM(cs), 0) AS total_attempt
+		FROM batting
+		GROUP BY playerid
+		ORDER BY playerid
+	)
+SELECT batting.playerid, ((CAST(stolen AS float) / CAST(total_attempt AS float))*100) AS percent_success
+FROM batting
+INNER JOIN edit
+ON batting.playerid = edit.playerid
+WHERE total_attempt > 19
+GROUP BY batting.playerid, stolen, total_attempt
+ORDER BY playerid
+
+
+
+
 WITH total_attempts AS(
 	SELECT playerid, (SUM(sb) + SUM(cs)) AS total_attempts
 	FROM batting AS b1
