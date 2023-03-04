@@ -101,8 +101,9 @@ FROM batting
 INNER JOIN edit
 ON batting.playerid = edit.playerid
 WHERE total_attempt > 19
+	AND yearid = 2016
 GROUP BY batting.playerid, stolen, total_attempt
-ORDER BY playerid
+ORDER BY percent_success DESC
 
 -- 7.  From 1970 – 2016, what is the largest number of wins for a team that did not win the world series? What is the smallest number of wins for a team that did win the world series? Doing this will probably result in an unusually small number of wins for a world series champion – determine why this is the case. Then redo your query, excluding the problem year. How often from 1970 – 2016 was it the case that a team with the most wins also won the world series? What percentage of the time?
 select teamid, w from teams
@@ -126,23 +127,56 @@ SELECT name, min(w)
 FROM teams
 WHERE WSWin LIKE 'Y'
 	AND yearid BETWEEN 1970 AND 2016
-	AND yearid <> 1994
+	AND yearid <> 1981
 GROUP BY name, w
 ORDER BY w
---Excluded 1994 due to strike. Smallest Number 63
+--Excluded 1981 due to strike. Smallest Number 83
 
 --Find Percent of WS Wins that are also the max wins
-WITH wswinners AS(
-SELECT yearid, name, w
-FROM teams
-WHERE yearid BETWEEN 1970 AND 2016
-	AND wswin LIKE 'Y'
-GROUP BY yearid, name, w
-WIN
 
+-- WITH maxwins AS (
+-- 	SELECT yearid, MAX(w) AS mostwins
+-- 	FROM teams
+-- 	GROUP BY yearid),
+-- 	totalwins AS(
+-- 	SELECT t.yearid, t.name, mostwins, t.wswin, SUM(CASE WHEN wswin='Y' THEN 1 ELSE 0 END) AS wins
+-- 	FROM teams AS t
+-- 		LEFT JOIN maxwins AS m
+-- 		ON t.yearid = m.yearid AND t.w = m.mostwins
+-- 	WHERE t.yearid > 1969
+-- 		AND m.mostwins IS NOT NULL
+-- 		AND wswin IS NOT NULL
+-- 	GROUP BY t.yearid, t.name, mostwins, t.wswin
+-- 	ORDER BY t.yearid
+-- 	)
+-- SELECT (
+-- 	((SELECT CAST(COUNT(wswin) AS numeric)
+-- 	 FROM teams
+-- 	 WHERE wswin LIKE 'Y') / CAST(COUNT(yearid) AS numeric)*100)) AS answer
+-- FROM teams
 
+with maxwins AS (
+	SELECT yearid, MAX(w) AS mostwins
+	FROM teams
+	GROUP BY yearid
+	),
+cte AS (
+	SELECT t.yearid, t.name, mostwins, t.wswin, SUM(CASE WHEN wswin ='Y' THEN 1 ELSE 0 END) :: numeric AS wins
+FROM teams AS t
+LEFT JOIN maxwins AS m
+ON t.yearid = m.yearid AND t.w = m.mostwins
+WHERE t.yearid > 1969
+AND m.mostwins IS NOT NULL
+AND wswin IS NOT NULL
+GROUP BY t.yearid, t.name, mostwins, t.wswin
+ORDER BY t.yearid
+	)
+SELECT SUM(wins) OVER () / COUNT(yearid) OVER () *100 AS percent_winners
+FROM cte
+LIMIT 1;
 
 -- 8. Using the attendance figures from the homegames table, find the teams and parks which had the top 5 average attendance per game in 2016 (where average attendance is defined as total attendance divided by number of games). Only consider parks where there were at least 10 games played. Report the park name, team name, and average attendance. Repeat for the lowest 5 average attendance.
+
 
 
 -- 9. Which managers have won the TSN Manager of the Year award in both the National League (NL) and the American League (AL)? Give their full name and the teams that they were managing when they won the award.
