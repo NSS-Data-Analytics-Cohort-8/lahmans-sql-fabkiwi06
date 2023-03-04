@@ -91,7 +91,20 @@ FROM batting
 
 -- 6. Find the player who had the most success stealing bases in 2016, where __success__ is measured as the percentage of stolen base attempts which are successful. (A stolen base attempt results either in a stolen base or being caught stealing.) Consider only players who attempted _at least_ 20 stolen bases.
 
-SELECT 
+WITH total_attempts AS(
+	SELECT playerid, (SUM(sb) + SUM(cs)) AS total_attempts
+	FROM batting AS b1
+	GROUP BY playerid)	
+-- SELECT batting.playerid, 
+-- 	(
+	SELECT ((sb / total_attempts))
+	FROM batting
+	INNER JOIN total_attempts
+	ON batting.playerid = total_attempts.playerid
+	WHERE total_attempts > 19
+-- 	) AS success_percent
+-- FROM batting
+-- GROUP BY batting.playerid
 	
 
 -- 7.  From 1970 – 2016, what is the largest number of wins for a team that did not win the world series? What is the smallest number of wins for a team that did win the world series? Doing this will probably result in an unusually small number of wins for a world series champion – determine why this is the case. Then redo your query, excluding the problem year. How often from 1970 – 2016 was it the case that a team with the most wins also won the world series? What percentage of the time?
@@ -149,4 +162,6 @@ ORDER BY yearid DESC
 
 -- 13. It is thought that since left-handed pitchers are more rare, causing batters to face them less often, that they are more effective. Investigate this claim and present evidence to either support or dispute this claim. First, determine just how rare left-handed pitchers are compared with right-handed pitchers. Are left-handed pitchers more likely to win the Cy Young Award? Are they more likely to make it into the hall of fame?
 
-  
+
+
+
