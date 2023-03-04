@@ -98,32 +98,13 @@ WITH edit AS
 		GROUP BY playerid
 		ORDER BY playerid
 	)
-SELECT batting.playerid, ((CAST(stolen AS float) / CAST(total_attempt AS float))*100) AS percent_success
+SELECT batting.playerid, ROUND(((CAST(stolen AS numeric) / CAST(total_attempt AS numeric))*100), 2) AS percent_success
 FROM batting
 INNER JOIN edit
 ON batting.playerid = edit.playerid
 WHERE total_attempt > 19
 GROUP BY batting.playerid, stolen, total_attempt
 ORDER BY playerid
-
-
-
-
-WITH total_attempts AS(
-	SELECT playerid, (SUM(sb) + SUM(cs)) AS total_attempts
-	FROM batting AS b1
-	GROUP BY playerid)	
--- SELECT batting.playerid, 
--- 	(
-	SELECT ((sb / total_attempts))
-	FROM batting
-	INNER JOIN total_attempts
-	ON batting.playerid = total_attempts.playerid
-	WHERE total_attempts > 19
--- 	) AS success_percent
--- FROM batting
--- GROUP BY batting.playerid
-	
 
 -- 7.  From 1970 – 2016, what is the largest number of wins for a team that did not win the world series? What is the smallest number of wins for a team that did win the world series? Doing this will probably result in an unusually small number of wins for a world series champion – determine why this is the case. Then redo your query, excluding the problem year. How often from 1970 – 2016 was it the case that a team with the most wins also won the world series? What percentage of the time?
 SELECT name, w
