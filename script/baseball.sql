@@ -275,6 +275,21 @@ WHERE a.playerid IN
 -- 10. Find all players who hit their career highest number of home runs in 2016. Consider only players who have played in the league for at least 10 years, and who hit at least one home run in 2016. Report the players' first and last names and the number of home runs they hit in 2016.
 
 
+with maxhr AS (
+SELECT playerid, yearid, MAX(hr) AS max
+FROM batting
+GROUP BY playerid, yearid
+HAVING MAX(hr) > 0
+ORDER BY yearid)
+
+SELECT namefirst, namelast, yearid, maxhr.max AS homeruns
+FROM people
+JOIN maxhr
+USING (playerid)
+WHERE yearid = 2016
+AND people.debut :: date < '2006-01-01'
+ORDER BY homeruns DESC
+
 -- **Open-ended questions**
 
 -- 11. Is there any correlation between number of wins and team salary? Use data from 2000 and later to answer this question. As you do this analysis, keep in mind that salaries across the whole league tend to increase together, so you may want to look on a year-by-year basis.
